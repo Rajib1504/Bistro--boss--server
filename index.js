@@ -46,17 +46,21 @@ async function run() {
       res.send(result);
     });
     // admin creation
-    app.patch("/user/admin/:id", async (req, res) => {
+    app.patch("/users/admin/:id", async (req, res) => {
       const id = req.params.id;
-      const filter = { _id: new ObjectId(id) };
-      const updatedDoc = {
-        $set: {
-          // which field you want to set and what you want to set
-          role: "admin",
-        },
-      };
-      const result = await userCollection.updateOne(filter, updatedDoc, Option);
-      res.send(result);
+      try {
+        const filter = { _id: new ObjectId(id) };
+        const updatedDoc = {
+          $set: {
+            // which field you want to set and what you want to set
+            role: "admin",
+          },
+        };
+        const result = await userCollection.updateOne(filter, updatedDoc);
+        res.send(result);
+      } catch (error) {
+        res.status(400).send({ error: "Invalid User ID" });
+      }
     });
 
     app.delete("/users/:id", async (req, res) => {
