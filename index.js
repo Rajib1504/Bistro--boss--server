@@ -30,10 +30,43 @@ async function run() {
     // user releted api
     app.post(`/users`, async (req, res) => {
       const user = req.body;
+      // insert email if user dosent exists:
+      // you can do this many ways(1.email unique,2.upsert,3.simple checking)
+      const query = { email: user.email }; //we are tring to find the user in the data base by his mail
+      const existingUser = await userCollection.findOne(query); //here we are searching for him
+      if (existingUser) {
+        return res.send({ message: "user already exist", insertedId: null });
+      }
+      // if you find the user by doing the query then retrun him with message and the set the insertedId null
       const result = await userCollection.insertOne(user);
       res.send(result);
     });
-    // menu apis
+    app.get("/users", async (req, res) => {
+      const result = await userCollection.find().toArray();
+      res.send(result);
+    });
+    // admin creation
+    app.patch("/user/admin/:id", async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: new ObjectId(id) };
+      const updatedDoc = {
+        $set: {
+          // which field you want to set and what you want to set
+          role: "admin",
+        },
+      };
+      const result = await userCollection.updateOne(filter, updatedDoc, Option);
+      res.send(result);
+    });
+
+    app.delete("/users/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await userCollection.deleteOne(query);
+      res.send(result);
+    });
+
+    // menu's releted apis
     app.get("/menu", async (req, res) => {
       const result = await menuCollection.find().toArray();
       res.send(result);
