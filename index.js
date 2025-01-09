@@ -53,7 +53,6 @@ async function run() {
       }
       const token = req.headers.authorization.split(" ")[1];
     };
-
     // user releted api
     app.post(`/users`, async (req, res) => {
       const user = req.body;
