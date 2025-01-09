@@ -1,5 +1,6 @@
 const express = require("express");
 const app = express();
+var jwt = require("jsonwebtoken");
 require("dotenv").config();
 const cors = require("cors");
 const port = process.env.port || 5000;
@@ -9,6 +10,7 @@ app.use(cors());
 app.use(express.json());
 
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
+
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.tkglq.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
 
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
@@ -27,6 +29,31 @@ async function run() {
     const reviewCollection = client.db("bistroDb").collection("reviews");
     const cartCollection = client.db("bistroDb").collection("carts");
     const userCollection = client.db("bistroDb").collection("users");
+    // Jwt releted apis
+    app.post("/jwt", async (req, res) => {
+      const user = req.body; //payload
+      const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, {
+        expiresIn: "1h",
+      }); //first payload,secret,option expire time
+      res.send({ token });
+    });
+    // app.post("/jwt", async (req, res) => {
+    //   const user = req.body; //payload
+    //   const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, {
+    //     expiresIn: "1h",
+    //   }); //first payload,secret,option expire time
+    //   res.send({token});
+    // });
+
+    //middlewares
+    const verifyToken = (req, res, next) => {
+      console.log("inside verify token", req.headers);
+      if (!req.headers.authorization) {
+        return res.status(401).send({ message: "forbidden access" });
+      }
+      const token = req.headers.authorization.split(" ")[1];
+    };
+
     // user releted api
     app.post(`/users`, async (req, res) => {
       const user = req.body;
@@ -41,7 +68,8 @@ async function run() {
       const result = await userCollection.insertOne(user);
       res.send(result);
     });
-    app.get("/users", async (req, res) => {
+    app.get("/users", verifyToken, async (req, res) => {
+      // console.log(req.headers);
       const result = await userCollection.find().toArray();
       res.send(result);
     });
