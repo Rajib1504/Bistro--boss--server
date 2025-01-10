@@ -111,24 +111,29 @@ async function run() {
       }
     });
     // admin creation
-    app.patch("/users/admin/:id", async (req, res) => {
-      const id = req.params.id;
-      try {
-        const filter = { _id: new ObjectId(id) };
-        const updatedDoc = {
-          $set: {
-            // which field you want to set and what you want to set
-            role: "admin",
-          },
-        };
-        const result = await userCollection.updateOne(filter, updatedDoc);
-        res.send(result);
-      } catch (error) {
-        res.status(400).send({ error: "Invalid User ID" });
+    app.patch(
+      "/users/admin/:id",
+      verifyToken,
+      verifyAdmin,
+      async (req, res) => {
+        const id = req.params.id;
+        try {
+          const filter = { _id: new ObjectId(id) };
+          const updatedDoc = {
+            $set: {
+              // which field you want to set and what you want to set
+              role: "admin",
+            },
+          };
+          const result = await userCollection.updateOne(filter, updatedDoc);
+          res.send(result);
+        } catch (error) {
+          res.status(400).send({ error: "Invalid User ID" });
+        }
       }
-    });
+    );
 
-    app.delete("/users/:id", async (req, res) => {
+    app.delete("/users/:id", verifyToken, verifyAdmin, async (req, res) => {
       const id = req.params.id;
       const query = { _id: new ObjectId(id) };
       const result = await userCollection.deleteOne(query);
