@@ -46,6 +46,7 @@ async function run() {
     // });
 
     //middlewares
+    // verify token  middlewear
     const verifyToken = (req, res, next) => {
       // console.log("inside verify token", req.headers.authorization);
       if (!req.headers.authorization) {
@@ -60,6 +61,18 @@ async function run() {
         next();
       });
     };
+    // user verify admin after the verifytoken
+    const verifyAdmin = async (req, res, next) => {
+      const email = req.decoded.email;
+      const query = { email: email };
+      const user = await userCollection.findOne(query);
+      const isAdmin = user?.role === "admin";
+      if (!isAdmin) {
+        return res.status(403).send({ message: "forbidden access" });
+      }
+      next();
+    };
+
     // user releted api
     app.post(`/users`, async (req, res) => {
       const user = req.body;
@@ -74,10 +87,28 @@ async function run() {
       const result = await userCollection.insertOne(user);
       res.send(result);
     });
-    app.get("/users", verifyToken, async (req, res) => {
+    app.get("/users", verifyToken, verifyAdmin, async (req, res) => {
       // console.log(req.headers);
       const result = await userCollection.find().toArray();
       res.send(result);
+    });
+
+    // get the admin from the website
+    app.get("/user/admin/:email", verifyToken, async (req, res) => {
+      const email = req.params.email;
+      if (email !== req.decoded.email) {
+        //during sending the token we sent the email and set it so we are checking that email with this email(you shuold chek your token with your email if this will not then...)
+        return res.status(403).send({ message: "unauthorized access" });
+      } else {
+        const query = { email: email };
+        const user = await userCollection.findOne(query);
+        let admin = false;
+        if (user) {
+          // if user is true then find the admin how you will find we will go to the data base and chck is role is admin if yes the send the admin role as an object
+          admin = user?.role === "admin";
+        }
+        res.send({ admin });
+      }
     });
     // admin creation
     app.patch("/users/admin/:id", async (req, res) => {
