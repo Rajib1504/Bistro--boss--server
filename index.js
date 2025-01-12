@@ -145,7 +145,8 @@ async function run() {
       const result = await menuCollection.find().toArray();
       res.send(result);
     });
-    app.post("/menu", async (req, res) => {
+    //need to secure the post in backed for Form submition only Admin sould have the permition
+    app.post("/menu", verifyToken, verifyAdmin, async (req, res) => {
       const menu = req.body;
       const result = await menuCollection.insertOne(menu);
       res.send(result);
