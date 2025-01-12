@@ -151,6 +151,13 @@ async function run() {
       const result = await menuCollection.insertOne(menu);
       res.send(result);
     });
+    // admin only will delete the data
+    app.delete("/menu/:id", verifyToken, verifyAdmin, async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await menuCollection.deleteOne(query);
+      res.send(result);
+    });
     // review
     app.get("/review", async (req, res) => {
       const result = await reviewCollection.find().toArray();
