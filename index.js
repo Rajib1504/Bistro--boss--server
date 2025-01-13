@@ -3,6 +3,7 @@ const app = express();
 var jwt = require("jsonwebtoken");
 require("dotenv").config();
 const cors = require("cors");
+const stripe = require("stripe")(process.env.STRIPE_SECRET_KEY);
 const port = process.env.port || 5000;
 
 //middlewire
@@ -204,6 +205,19 @@ async function run() {
       const query = { _id: new ObjectId(id) };
       const result = await cartCollection.deleteOne(query);
       res.send(result);
+    });
+    // payment
+    app.post("/create-payment-intent", async (req, res) => {
+      const { price } = req.body;
+      const amount = parseInt(price * 100); //whatever money can come form the clint side we need to calclulate in poisa because stripe is calculating in poisa
+      const PaymentIntent = await stripe.paymentIntents.create({
+        amount: amount, // the amount which we calculate
+        currency: "usd",
+        payment_method_types: ["card"],
+      });
+      res.send({
+        clientSecret: PaymentIntent.client_secret,
+      });
     });
   } finally {
   }
